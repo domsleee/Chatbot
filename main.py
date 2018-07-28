@@ -4,7 +4,7 @@ from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer, ListTrainer
 import json
 from pymongo import MongoClient
-from fb_trainer import FbTrainer
+from lib.fb_trainer import FbTrainer
 import os
 import argparse
 
@@ -40,8 +40,14 @@ def main(args):
         else:
             train_all(bot)
     while True:
-        req = input('User: ')
-        print('Bot:', bot.get_response(req))
+        try:
+            req = input('User: ')
+            print('Bot:', bot.get_response(req))
+        except KeyboardInterrupt:
+            print('Exiting..')
+            break
+        except Exception:
+            raise
 
 def get_user():
     files = os.listdir(MESSAGES_FOLDER)
