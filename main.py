@@ -82,8 +82,9 @@ def clear_db():
         mongo.drop_database(db_name)
 
 def get_msgs(user):
-    if os.path.isfile(MESSAGES_FOLDER+user+'/message.json'):
-        with open(MESSAGES_FOLDER+user+'/message.json', encoding='utf-8') as f:
+    path = os.path.join(MESSAGES_FOLDER, user, 'message.json')
+    if os.path.isfile(path):
+        with open(path, encoding='utf-8') as f:
             return json.load(f)
     else:
         print('warning: file doesn\'t exist')
