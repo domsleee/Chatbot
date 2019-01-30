@@ -4,7 +4,7 @@ from chatterbot.conversation import Statement
 import json
 import os
 from pymongo import MongoClient
-from lib.fb_trainer_diff import FbTrainer
+from lib.fb_trainer import FbTrainer
 import logging
 
 HOST = 'localhost'
