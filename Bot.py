@@ -13,7 +13,7 @@ mongo = MongoClient(HOST, PORT)
 DB_NAME = "chatterbot-database"
 
 class Bot:
-    def __init__(self, name, inbox_folder, yes, user, db_name=DB_NAME):
+    def __init__(self, name, messages_folder, yes, user, db_name=DB_NAME):
         self._db_name = db_name
         self._bot = ChatBot(
             name,
@@ -25,12 +25,15 @@ class Bot:
         )
         self._log = logging.getLogger('Bot: '+name)
         self._name = name
-        self._inbox_folder = os.path.expanduser(inbox_folder)
-        if not os.path.isdir(self._inbox_folder):
-            raise ValueError("folder \"%s\" does not exist" % self._inbox_folder)
+        self._messages_folder = os.path.expanduser(messages_folder)
+        if not os.path.isdir(self._messages_folder):
+            raise ValueError("folder \"%s\" does not exist" % self._messages_folder)
         self._fb_trainer = FbTrainer(self._bot)
         self._yes = yes
         self._user = user
+
+        # lazy calls
+        self._get_all_files_res = False
     
     def run(self):
         if self._ask_yesno_question('Clear database? (y/n): '):
@@ -58,12 +61,30 @@ class Bot:
         self._user = self._get_user(msg='select user to mimic: ', user=self._user)
         corpus_trainer = ChatterBotCorpusTrainer(self._bot)
         corpus_trainer.train('chatterbot.corpus.english')
-        files = os.listdir(self._inbox_folder)
+        files = self._get_all_files()
         for i in range(len(files)):
             file = files[i]
             print('train: %d/%d (%s)' % (i, len(files), file))
             data = self._get_msgs(file)
             self._fb_trainer.train(data, self._user)
+            
+    def _get_all_files(self):
+        if self._get_all_files_res:
+            return self._get_all_files_res
+
+        res = []
+        s = [self._messages_folder]
+        while len(s):
+            folder = s.pop()
+            for file in os.listdir(folder):
+                new_file = os.path.join(folder, file)
+                if os.path.isdir(new_file):
+                    s.append(new_file)
+                elif file.endswith('json'):
+                    res.append(new_file)
+
+        self._get_all_files_res = res
+        return res
 
     def _get_user(self, msg='select user: ', user=None):
         """query the cli for a user. If `user` is provided,
@@ -82,7 +103,7 @@ class Bot:
         while val < 0 or val >= len(s):
             for i in range(len(s)):
                 print(str(i)+': '+s[i])
-            x = input('select user: ')
+            x = input(msg)
             try:
                 val = int(x)
             except Exception:
@@ -91,7 +112,7 @@ class Bot:
 
     def _get_all_users(self):
         """get a set of all participants"""
-        files = os.listdir(self._inbox_folder)
+        files = self._get_all_files()
         s = set()
         for file in files:
             msgs = self._get_msgs(file)
@@ -102,12 +123,12 @@ class Bot:
 
     def _get_msgs(self, file):
         """get messages from a conversation"""
-        path = os.path.join(self._inbox_folder, file, 'message.json')
+        path = os.path.join(file)
         if os.path.isfile(path):
             with open(path, encoding='utf-8') as f:
                 return json.load(f)
         else:
-            print('warning: file doesn\'t exist')
+            print('warning: file "%s" doesn\'t exist' % file)
             return {}
     
     def _get_statement(self, text):

@@ -10,13 +10,13 @@ from Bot import Bot
 DEBUG = False
 
 def main(args):
-    mybot = Bot("mybot", args.inbox_folder, args.yes, args.user)
+    mybot = Bot("mybot", args.messages_folder, args.yes, args.user)
     mybot.run()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='"intelligent" bot')
-    parser.add_argument('inbox_folder',
-                         help='inbox folder containing JSON message data')
+    parser.add_argument('messages_folder',
+                         help='message folder containing JSON message data (in inbox/ and archive/)')
     parser.add_argument('--yes', action='store_true',
                         help='yes to all')
     parser.add_argument('--user', '-u',
